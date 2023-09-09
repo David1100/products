@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css"
+        integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+</head>
+
+<body>
+    <div id="app" class="bg-gray h-100">
+        <div class="container-fluid py-5 ">
+            <div class="row">
+                <div class="col-lg-4">
+                    <div class="card card-default">
+                        <div class="card-body text-center">
+                            <img :src="txt_img" alt="" width="70%">
+                        </div>
+                        <div class="card-footer text-center">
+                            <button type="button" class="btn btn-success" data-toggle="tooltip" data-placement="top"
+                                title="Crear" @click="newData()">
+                                <i class="bi bi-database-fill-add"></i>
+                            </button>
+                            <button type="button" class="btn btn-primary" data-toggle="tooltip" data-placement="top"
+                                title="Actualizar" @click="txt_readonly_edit = false">
+                                <i class="bi bi-brush-fill"></i>
+                            </button>
+                            <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top"
+                                title="Eliminar" @click="deleteData()">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card card-default bg-gray_200">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="form-group col-lg-4">
+                                    <label for="id">Id:</label>
+                                    <input type="text" class="form-control" id="id" v-model="txt_id"
+                                        readonly>
+                                </div>
+                                <div class="form-group col-lg-8">
+                                    <label for="title">Titulo:</label>
+                                    <input type="text" class="form-control" id="title" v-model="txt_title"
+                                        :readonly="txt_readonly_edit">
+                                </div>
+                                <div class="form-group col-lg-12">
+                                    <label for="descrip">Descripción:</label>
+                                    <textarea type="password" class="form-control" id="descrip" rows="5"
+                                        v-model="txt_description" :readonly="txt_readonly_edit"></textarea>
+                                </div>
+                                <div class="form-group col-lg-2">
+                                    <label for="price">Precio:</label>
+                                    <input type="text" class="form-control" id="price" v-model="txt_price"
+                                        :readonly="txt_readonly_edit">
+                                </div>
+                                <div class="form-group col-lg-2">
+                                    <label for="cant">Cantidad:</label>
+                                    <input type="text" class="form-control" id="cant" v-model="txt_cant"
+                                        :readonly="txt_readonly_edit">
+                                </div>
+                                <div class="form-group col-lg-2">
+
+                                </div>
+                                <div class="form-group col-lg-2">
+                                    <label for="discount">Descuento:</label>
+                                    <select name="discount" id="discount" class="form-control" v-model="txt_discount"
+                                        @change="txt_readonly = ! txt_readonly">
+                                        <option value="true">Si</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-lg-2">
+                                    <label for="discountPer">%:</label>
+                                    <input type="text" class="form-control" id="discountPer" v-model="txt_discountPer"
+                                        :readonly="txt_readonly">
+                                </div>
+                                <div class="form-group col-lg-2">
+                                    <label for="discountUni">Unidades:</label>
+                                    <input type="text" class="form-control" id="discountUni" v-model="txt_discountUni"
+                                        :readonly="txt_readonly">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-right">
+                            <button type="button" class="btn btn-secondary" v-show="txt_readonly_edit == false "
+                                @click="cancelar()">Cancelar</button>
+                            <button type="button" class="btn btn-primary" v-show="txt_readonly_edit == false "
+                               @click="updateData()">Guardar</button>
+                            <button type="button" class="btn btn-secondary"
+                                v-show="number > 0 && txt_readonly_edit == true"
+                                @click="fetchData(number-1)">Anterior</button>
+                            <button type="button" class="btn btn-secondary" @click="fetchData(number+1)"
+                                v-show=" number < productos.length-1 && txt_readonly_edit == true ">Siguiente</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
+        new Vue({
+            el: '#app',
+            data: {
+                productos: [],
+                txt_id: '',
+                txt_title: '',
+                txt_description: '',
+                txt_price: '',
+                txt_cant: '',
+                txt_discount: true,
+                txt_discountPer: '',
+                txt_discountUni: '',
+                txt_readonly: false,
+                txt_readonly_edit: true,
+                txt_img: '',
+                btn_nuevo: false,
+                number: 0
+            },
+            methods: {
+                fetchData(number) {
+                    axios.get('http://localhost:3000/api/products')
+                        .then(response => {
+                            this.number = number;
+                            this.productos = response.data                            
+                            this.txt_id = response.data[number].id;
+                            this.txt_title = response.data[number].title;
+                            this.txt_description = response.data[number].description;
+                            this.txt_price = response.data[number].price;
+                            this.txt_cant = response.data[number].amount;
+                            this.txt_discount = response.data[number].discount;
+                            this.txt_discountPer = response.data[number].discountPer;
+                            this.txt_discountUni = response.data[number].discountUni;
+                            this.txt_readonly = response.data[number].discount ? false : true
+                            let img = this.txt_id > 25 ? 'producto-sin-imagen' : response.data[number].id  
+                            this.txt_img = './storage/imgs/' + img + '.jpg'
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                },
+                updateData() {
+                    let params = {                       
+                        title: this.txt_title,
+                        amount: this.txt_cant,
+                        price: this.txt_price,
+                        description: this.txt_description,
+                        discount: this.txt_discount,
+                        discountPer: this.txt_discountPer,
+                        discountUni: this.txt_discountUni,
+                    };
+                    
+                    if(this.btn_nuevo){
+                        params.id = this.productos.length+1;
+                        axios.post(`http://localhost:3000/api/products/`, params)
+                            .then(response => {
+                                swal("Excelente!", response.data.message, "success");
+                                this.fetchData(this.number);
+                                this.btn_nuevo = false
+                                this.txt_readonly_edit = true
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                            });
+                    }else{
+                        axios.put(`http://localhost:3000/api/products/${this.txt_id}`, params)
+                            .then(response => {
+                                swal("Excelente!", response.data.message, "success");
+                                this.fetchData(this.number);
+                                this.txt_readonly_edit = true
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                            });
+                    }
+                },
+                deleteData() {
+                    axios.get('http://localhost:3000/api/products/' + this.txt_id)
+                        .then(response => {
+                            swal("Excelente!", response.data.message, "success");
+                            this.fetchData(0)
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                },
+                newData(){
+                    this.txt_id = ''
+                    this.txt_title = ''
+                    this.txt_description = ''
+                    this.txt_cant = ''
+                    this.txt_price = ''
+                    this.txt_discountPer = ''
+                    this.txt_discountUni = ''
+                    this.txt_readonly_edit = false
+                    this.btn_nuevo = true
+                },
+                cancelar(){
+                    this.txt_readonly_edit = true 
+                    if(this.btn_nuevo = true){
+                        this.fetchData(this.number);
+                    }
+
+                }
+            },
+            created() {
+                this.fetchData(this.number)
+
+            }
+        });
+    </script>
+    <style>
+        .h-100 {
+            height: 100vh !important;
+        }
+
+        .bg-gray {
+            background: gray;
+        }
+
+        .bg-gray_200 {
+            background: rgb(218, 218, 218);
+        }
+    </style>
+</body>
+
+</html>
